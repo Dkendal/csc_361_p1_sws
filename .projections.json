@@ -1,0 +1,18 @@
+{
+  "*": {
+    "dispatch": "make check",
+    "make": "make"
+  },
+  "src/*.h": {
+    "alternate": "src/{}.c",
+    "type": "header"
+  },
+  "src/*.c": {
+    "alternate": ["src/{}.h", "tests/*_test.check"],
+    "type": "source",
+  },
+  "tests/*_test.check": {
+    "alternate": "src/{}.c",
+    "type": "test"
+  }
+}

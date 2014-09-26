@@ -1,2 +1,0 @@
-bin_PROGRAMS = sws
-sws_SOURCES = $(*.c|h)
