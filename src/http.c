@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -6,48 +7,54 @@
 
 #define BUFFER_SIZE 1024
 #define DELIMITERS " \t"
-#define TRUE 1
-#define FALSE 0
+#define PROTOCOL_VERSION "HTTP/1.0"
+
+#define STATUS_200 PROTOCOL_VERSION " 200 OK"
+#define STATUS_400 PROTOCOL_VERSION " 400 Bad Request"
+#define STATUS_404 PROTOCOL_VERSION " 404 Not Found"
 
 #define unless(EXP) if(!(EXP))
 
-int verb_is_supported(char *verb)
+bool verb_is_supported(char *verb)
 {
-  return TRUE;
+  if( strcasecmp(verb, "GET") == 0 )
+    return true;
+  else
+    return false;
 }
 
-int protocol_is_supported(char *protocol)
+bool protocol_is_supported(char *protocol)
 {
-  return FALSE;
+  if( strcasecmp(protocol, "HTTP/1.0") == 0 )
+    return true;
+  else
+    return false;
 }
 
-int file_is_readable(char *path)
+bool file_is_readable(char *path)
 {
-  return FALSE;
+  return true;
 }
 
 char* request(char* msg)
 {
   char *verb, *path, *protocol, *buffer;
+
   buffer = strdup(msg);
   assert(buffer != NULL);
 
-  //split tokens
   verb = strtok(buffer, DELIMITERS);
   path = strtok(NULL, DELIMITERS);
   protocol = strtok(NULL, DELIMITERS);
 
-  //verb directory protocol
-  unless(verb_is_supported(verb) == TRUE &&
-      protocol_is_supported(protocol) == TRUE) {
-    // return  400
+  unless(verb_is_supported(verb) &&
+      protocol_is_supported(protocol) ) {
+    return STATUS_400;
   }
 
-  unless( file_is_readable(path) == TRUE ) {
-    // return 404
+  unless( file_is_readable(path) ) {
+    return STATUS_404;
   }
 
-  //return 200
-
-  return "";
+  return STATUS_200;
 }
