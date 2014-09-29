@@ -15,6 +15,8 @@
 
 #define unless(EXP) if(!(EXP))
 
+char *dir_root = "../www";
+
 bool verb_is_supported(char *verb)
 {
   if( strcasecmp(verb, "GET") == 0 )
@@ -31,30 +33,64 @@ bool protocol_is_supported(char *protocol)
     return false;
 }
 
-bool file_is_readable(char *path)
+bool resource_uri_valid(char *uri)
 {
-  return true;
+  // the only validation I'm going to do is check if it's an absolute path
+  return uri[0] == '/';
+}
+
+FILE * get(char *path)
+{
+  char *rel_path;
+  FILE *document;
+  int string_length;
+
+  if (strcmp(path, "/") == 0) {
+    path = "/index.html";
+  }
+
+  //check that path is not in parent
+  unless( strstr(path, "/../") == NULL ) {
+    return NULL;
+  }
+
+  // prepend the root directory to the target file path
+  string_length= strlen(path) + strlen(dir_root) + 1;
+  rel_path = malloc( sizeof(char) * string_length );
+  assert(rel_path != NULL);
+
+  strcpy(rel_path, dir_root);
+  strcat(rel_path, path);
+
+  puts(rel_path);
+  return fopen(rel_path, "r");
 }
 
 char* request(char* msg)
 {
-  char *verb, *path, *protocol, *buffer;
+  char *verb, *resource, *protocol, *buffer;
+  FILE *document;
 
   buffer = strdup(msg);
   assert(buffer != NULL);
 
   verb = strtok(buffer, DELIMITERS);
-  path = strtok(NULL, DELIMITERS);
+  resource = strtok(NULL, DELIMITERS);
   protocol = strtok(NULL, DELIMITERS);
 
   unless(verb_is_supported(verb) &&
+      resource_uri_valid(resource) &&
       protocol_is_supported(protocol) ) {
     return STATUS_400;
   }
 
-  unless( file_is_readable(path) ) {
+  document = get(resource);
+
+  if( document ==  NULL ) {
     return STATUS_404;
   }
+
+  fclose(document);
 
   return STATUS_200;
 }
