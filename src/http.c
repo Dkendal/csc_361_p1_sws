@@ -6,44 +6,65 @@
 #include "http.h"
 
 #define BUFFER_SIZE 1024
-#define DELIMITERS " \t"
+#define DELIMITERS " \t\r\n"
 #define PROTOCOL_VERSION "HTTP/1.0"
 
-#define STATUS_200 PROTOCOL_VERSION " 200 OK"
-#define STATUS_400 PROTOCOL_VERSION " 400 Bad Request"
-#define STATUS_404 PROTOCOL_VERSION " 404 Not Found"
+#define STATUS_200 PROTOCOL_VERSION " 200 OK\n\n"
+#define STATUS_400 PROTOCOL_VERSION " 400 Bad Request\n\n"
+#define STATUS_404 PROTOCOL_VERSION " 404 Not Found\n\n"
 
 #define unless(EXP) if(!(EXP))
 
-char *dir_root = "../www";
+static char *root_dir;
+
+void http_cleanup(void)
+{
+  free(root_dir);
+}
+
+void http_init(char *path)
+{
+  root_dir = strdup(path);
+  assert(atexit(http_cleanup) == 0);
+}
 
 bool verb_is_supported(char *verb)
 {
-  if( strcasecmp(verb, "GET") == 0 )
+  if( strcasecmp(verb, "GET") == 0 ) {
     return true;
-  else
+  }
+  else {
     return false;
+  }
 }
 
 bool protocol_is_supported(char *protocol)
 {
-  if( strcasecmp(protocol, "HTTP/1.0") == 0 )
+  if( strcasecmp(protocol, "HTTP/1.0") == 0 ) {
     return true;
-  else
+  }
+  else {
     return false;
+  }
 }
 
 bool resource_uri_valid(char *uri)
 {
   // the only validation I'm going to do is check if it's an absolute path
-  return uri[0] == '/';
+  if(uri[0] == '/') {
+    return true;
+  }
+  else {
+    return false;
+  }
 }
 
-FILE * get(char *path)
+char * get(char *path)
 {
-  char *rel_path;
-  FILE *document;
+  char *rel_path, *resource_contents;
+  FILE *resource;
   int string_length;
+  long resource_size;
 
   if (strcmp(path, "/") == 0) {
     path = "/index.html";
@@ -55,21 +76,33 @@ FILE * get(char *path)
   }
 
   // prepend the root directory to the target file path
-  string_length= strlen(path) + strlen(dir_root) + 1;
+  string_length = strlen(path) + strlen(root_dir) + 1;
   rel_path = malloc( sizeof(char) * string_length );
   assert(rel_path != NULL);
 
-  strcpy(rel_path, dir_root);
-  strcat(rel_path, path);
+  strcpy(rel_path, root_dir);
+  strncat(rel_path, path, string_length);
 
-  puts(rel_path);
-  return fopen(rel_path, "r");
+  resource = fopen(rel_path, "r");
+
+  free(rel_path);
+
+  if(resource == NULL) return NULL;
+
+  fseek(resource, 0, SEEK_END);
+  resource_size = ftell(resource);
+  rewind(resource);
+  resource_contents = malloc(resource_size * (sizeof(char)));
+  fread(resource_contents, sizeof(char), resource_size, resource);
+
+  fclose(resource);
+
+  return resource_contents;
 }
 
 char* request(char* msg)
 {
-  char *verb, *resource, *protocol, *buffer;
-  FILE *document;
+  char *verb, *resource, *protocol, *buffer, *resource_contents;
 
   buffer = strdup(msg);
   assert(buffer != NULL);
@@ -84,13 +117,24 @@ char* request(char* msg)
     return STATUS_400;
   }
 
-  document = get(resource);
+  resource_contents = get(resource);
 
-  if( document ==  NULL ) {
+  free(buffer);
+
+  if(resource_contents == NULL) {
     return STATUS_404;
   }
 
-  fclose(document);
+  int string_length = 1 + strlen(resource_contents) + strlen(STATUS_200);
 
-  return STATUS_200;
+  char *response = malloc(sizeof(char) * string_length);
+  assert(response != NULL);
+
+  strncpy(response, STATUS_200, string_length);
+  strncat(response, resource_contents, string_length);
+  response[string_length] = '\0';
+
+  free(resource_contents);
+
+  return response;
 }

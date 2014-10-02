@@ -6,16 +6,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-
-#define MYPORT "3000"
-
+#include <assert.h>
+#include "http.h"
 #define BUFF_SIZE 256
-
-#define check(EXP) \
-  if(( EXP ) == -1) { \
-    perror("error: " #EXP); \
-    exit(EXIT_FAILURE); \
-  }
 
 void *get_in_addr(struct sockaddr *sa)
 {
@@ -26,7 +19,17 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int main(void) {
+int main(int argc, const char *argv[])
+{
+  char* port;
+
+  assert(argc == 3);
+
+  port = strdup(argv[1]);
+
+  // set root directory for the server
+  http_init( strdup(argv[2]) );
+
   struct addrinfo hints, *res;
   struct sockaddr_storage their_addr;
   int sock_fd, numbytes;
@@ -39,28 +42,36 @@ int main(void) {
   hints.ai_socktype = SOCK_DGRAM;
   hints.ai_flags = AI_PASSIVE;
 
-  check( getaddrinfo(NULL, MYPORT, &hints, &res) );
+  assert( getaddrinfo(NULL, port, &hints, &res) == 0 );
 
-  check( sock_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol) );
+  sock_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+  assert(sock_fd != -1 );
 
-  check( bind(sock_fd, res->ai_addr, res->ai_addrlen) );
+  assert( bind(sock_fd, res->ai_addr, res->ai_addrlen) == 0 );
 
   freeaddrinfo(res);
 
   printf("waiting to recvfrom...\n");
 
-  addr_len = sizeof their_addr;
-  check( numbytes = recvfrom(sock_fd, buff, BUFF_SIZE -1, 0,
-        (struct sockaddr *)&their_addr, &addr_len) );
+  for (;;) {
+    addr_len = sizeof their_addr;
+    numbytes = recvfrom(sock_fd, buff, BUFF_SIZE -1, 0,
+          (struct sockaddr *)&their_addr, &addr_len);
+    buff[numbytes] = '\0';
 
-  printf("listener: got packet from %s\n",
-      inet_ntop(their_addr.ss_family,
-        get_in_addr((struct sockaddr *)&their_addr),
-        s, sizeof s));
-  printf("listener: packet is %d bytes long\n", numbytes);
-  buff[numbytes] = '\0';
-  printf("listener: packet contains \"%s\"\n", buff);
+    assert(numbytes != -1);
 
-  check( close(sock_fd) );
+    printf("listener: got packet from %s\n",
+        inet_ntop(their_addr.ss_family,
+          get_in_addr((struct sockaddr *)&their_addr),
+          s, sizeof s));
+    printf("listener: packet is %d bytes long\n", numbytes);
+
+    printf("listener: packet contains \"%s\"\n", buff);
+
+    puts(request(buff));
+  }
+
+  assert( close(sock_fd) == 0 );
   return 0;
 }
