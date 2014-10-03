@@ -34,8 +34,8 @@ int main(int argc, const char *argv[])
   struct sockaddr_storage their_addr;
   int sock_fd, numbytes;
   socklen_t addr_len;
-  char buff[BUFF_SIZE];
-  char s[INET6_ADDRSTRLEN];
+  char buff[BUFF_SIZE], s[INET6_ADDRSTRLEN];
+  char *response;
 
   memset(&hints, 0, sizeof hints);
   hints.ai_family = AF_UNSPEC;
@@ -69,7 +69,8 @@ int main(int argc, const char *argv[])
 
     printf("listener: packet contains \"%s\"\n", buff);
 
-    puts(request(buff));
+    puts(response = request(buff));
+    free(response);
   }
 
   assert( close(sock_fd) == 0 );

@@ -100,6 +100,7 @@ char * get(char *path)
   return resource_contents;
 }
 
+// returns a string on the heap
 char* request(char* msg)
 {
   char *verb, *resource, *protocol, *buffer, *resource_contents;
@@ -114,7 +115,7 @@ char* request(char* msg)
   unless(verb_is_supported(verb) &&
       resource_uri_valid(resource) &&
       protocol_is_supported(protocol) ) {
-    return STATUS_400;
+    return strdup(STATUS_400);
   }
 
   resource_contents = get(resource);
@@ -122,7 +123,7 @@ char* request(char* msg)
   free(buffer);
 
   if(resource_contents == NULL) {
-    return STATUS_404;
+    return strdup(STATUS_404);
   }
 
   int string_length = 1 + strlen(resource_contents) + strlen(STATUS_200);
