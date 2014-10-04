@@ -1,7 +1,5 @@
-www/cantRead
-tests/check
-tests/*.c
-build/*
-sws
 *.o
 *.out
+www/cantRead
+build/*
+sws
