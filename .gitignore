@@ -4,3 +4,4 @@ tests/*.c
 build/*
 sws
 *.o
+*.out
