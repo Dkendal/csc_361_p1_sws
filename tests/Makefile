@@ -1,11 +1,9 @@
-OBJFILES := http_test.o
-CFLAGS := -g
+LDLIBS := -lgtest -lgtest_main -lpthread
+OBJFILES := http_server_test.o request_test.o
+CFLAGS := -Wall -pedantic
 
-check: convert $(OBJFILES)
-	cc -o check $(OBJFILES) $(CFLAGS) $(LDFLAGS) `pkg-config --cflags --libs check`
-
-convert:
-	checkmk http_test.check > http_test.c
+all: $(OBJFILES)
+	g++ -o test.out $(CFLAGS) $(OBJFILES) $(LDLIBS)
 
 clean:
-	rm -f *.c *.o
+	rm *.o test -f

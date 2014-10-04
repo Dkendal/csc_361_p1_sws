@@ -1,18 +1,19 @@
 {
   "*": {
-    "dispatch": "make check",
+    "dispatch": "make test",
     "make": "make"
   },
   "src/*.h": {
-    "alternate": "src/{}.c",
+    "alternate": "src/{}.cc",
     "type": "header"
   },
-  "src/*.c": {
-    "alternate": ["src/{}.h", "tests/*_test.check"],
+  "src/*.cc": {
+    "alternate": ["tests/{}_test.cc"],
     "type": "source",
   },
-  "tests/*_test.check": {
-    "alternate": "src/{}.c",
-    "type": "test"
+  "tests/*_test.cc": {
+    "alternate": "src/{}.cc",
+    "type": "test",
+    "template": "#include <gtest/gtest.h>\n\nTEST ()\n{\n}"
   }
 }

@@ -1,7 +1,8 @@
-CFLAGS := -g
+CC := g++
+OBJFILES := http.o sws.o
 
-all: http.o sws.o
-	cc -o sws http.o sws.o $(CFLAGS)
+all: $(OBJFILES)
+	$(CC) -o sws $(OBJFILES)
 
 clean:
-	rm -f *.o
+	rm -rf *.o *.out
