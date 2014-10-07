@@ -7,5 +7,5 @@ test:
 	cd tests && $(MAKE) && ./test
 
 clean:
-	cd tests && $(MAKE) clean
-	cd src && $(MAKE) clean
+	cd tests && make clean
+	cd src && make clean

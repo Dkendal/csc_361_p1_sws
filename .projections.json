@@ -1,7 +1,7 @@
 {
   "*": {
     "dispatch": "make test",
-    "make": "make"
+    "make": "make test"
   },
   "src/*.h": {
     "alternate": "src/{}.cc",
@@ -9,11 +9,13 @@
   },
   "src/*.cc": {
     "alternate": ["tests/{}_test.cc"],
+    "dispatch": "make test OBJECTS={}_test.o",
     "type": "source",
   },
   "tests/*_test.cc": {
     "alternate": "src/{}.cc",
     "type": "test",
+    "dispatch": "make test OBJECTS={}_test.o",
     "template": "#include <gtest/gtest.h>\n\nTEST ()\n{\n}"
   }
 }
