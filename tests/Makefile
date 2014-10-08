@@ -1,9 +1,11 @@
 LDLIBS := -lgtest -lgtest_main -lpthread
-OBJECTS ?= http_server_test.o request_test.o
+OBJECTS :=
 CFLAGS := -Wall -pedantic
+VPATH := ../src
+SRC := $(OBJECTS:_test.o=.cc)
 
-all: $(OBJECTS)
-	g++ -o test $(CFLAGS) $(OBJECTS) $(LDLIBS)
+all: $(OBJECTS) $(SRC)
+	g++ $(CFLAGS) -o test $(OBJECTS) $(LDLIBS)
 
 clean:
 	rm *.o *.out -f

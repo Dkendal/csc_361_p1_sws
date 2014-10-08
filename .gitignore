@@ -4,3 +4,4 @@ tests/test
 www/cantRead
 build/*
 sws
+test
