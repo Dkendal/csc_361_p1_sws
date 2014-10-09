@@ -4,13 +4,24 @@
 class HttpServerTest : public ::testing::Test
 {
   protected:
-    virtual void SetUp() { server = new HttpServer("./www"); }
-    virtual void TearDown() { delete server; }
+    virtual void SetUp() { HttpServer server("9999", "./www"); }
+    //virtual void TearDown() { delete server; }
     HttpServer *server;
 };
 class RequestTest : public HttpServerTest { };
 class IsResourceReadableTest : public HttpServerTest { };
+class IsResourceValidTest : public HttpServerTest { };
 
+TEST_F(IsResourceValidTest, ValidPath)
+{
+  EXPECT_TRUE(server->IsResourceValid("/index.html"));
+  EXPECT_TRUE(server->IsResourceValid("/"));
+}
+
+TEST_F(IsResourceValidTest, InvalidPath)
+{
+  EXPECT_FALSE(server->IsResourceValid("http.request"));
+}
 // IsResourceReadableTest
 TEST_F(IsResourceReadableTest, ValidPath)
 {

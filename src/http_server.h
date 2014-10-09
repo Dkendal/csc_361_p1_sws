@@ -1,13 +1,14 @@
 #ifndef HTTP_SEVER_H
 #define HTTP_SERVER_H
 
-using namespace std;
 #include "response.h"
+
+using namespace std;
 
 class HttpServer
 {
 public:
-  HttpServer(const string);
+  HttpServer(string, string);
   ~HttpServer();
   string Get(string);
   Response Request(string);
@@ -17,8 +18,11 @@ public:
   bool IsResourceReadable(string);
   bool IsProtocolValid(string);
 
+  int Start();
+  int Init();
 private:
+  string port;
   string root_dir;
-  /* data */
+  int sock_fd;
 };
 #endif

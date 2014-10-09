@@ -5,8 +5,15 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <cstdlib>
 #include "response.h"
 #include "http_server.h"
+
 
 #define PROTOCOL_VERSION "HTTP/1.0"
 #define STATUS_200 PROTOCOL_VERSION " 200 OK"
@@ -15,8 +22,15 @@
 
 using namespace std;
 
-HttpServer::HttpServer(const string root_dir) : root_dir(root_dir) {}
-HttpServer::~HttpServer() {}
+HttpServer::HttpServer(string port, string root_dir) :
+ port(port), root_dir(root_dir)
+{
+  sock_fd = -1;
+}
+
+HttpServer::~HttpServer() {
+  if (sock_fd != 1) { close(sock_fd); }
+}
 
 string HttpServer::Get(string resource)
 {
@@ -35,41 +49,103 @@ bool HttpServer::IsVerbValid(string verb)
 
 bool HttpServer::IsResourceReadable(string resource)
 {
-
   string uri = this->root_dir + resource;
+  const char *uri_c = uri.c_str();
 
   // this is very naive, will report false positive if filename is prefixed with ..
   if ( resource.find("/..") != string::npos ) {
     return false;
   }
 
-  ifstream file(uri.c_str());
+  ifstream file(uri_c);
   return file.good();
 }
 
 bool HttpServer::IsResourceValid(string resource)
 {
-  return true;
+  const char *res = resource.c_str();
+  return res[0] == '/';
 }
 
 Response HttpServer::Request(string request_str)
 {
-  Response my_response(request_str);
+  Response response(request_str);
 
-  if (!IsProtocolValid(my_response.protocol)) {
-    my_response.header = STATUS_400;
-  }
-  else if (IsVerbValid(my_response.verb)) {
-    if (IsResourceReadable(my_response.resource)) {
-      my_response.header = STATUS_200;
-    }
-    else {
-      my_response.header = STATUS_404;
-    }
+  if (!IsVerbValid(response.verb) ||
+      !IsResourceValid(response.resource) ||
+      !IsProtocolValid(response.protocol)) {
+    response.header = STATUS_400;
   }
   else {
-    my_response.header = STATUS_400;
+    if (IsResourceReadable(response.resource)) {
+      response.header = STATUS_200;
+    }
+    else {
+      response.header = STATUS_404;
+    }
   }
 
-  return my_response;
+  return response;
+}
+
+int HttpServer::Init()
+{
+  struct addrinfo hints, *res;
+
+  memset(&hints, 0, sizeof hints);
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_DGRAM;
+  hints.ai_flags = AI_PASSIVE;
+
+  if (getaddrinfo(NULL, port.c_str(), &hints, &res) != 0)
+  {
+    perror("getaddrinfo: ");
+    exit(EXIT_FAILURE);
+  }
+
+  sock_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
+  if (sock_fd == -1)
+  {
+    perror("getaddrinfo: ");
+    exit(EXIT_FAILURE);
+  }
+
+  if ( bind(sock_fd, res->ai_addr, res->ai_addrlen) != 0) {
+    perror("bind: ");
+    exit(EXIT_FAILURE);
+  }
+
+  freeaddrinfo(res);
+
+  return 0;
+}
+
+#define BUFF_SIZE 256
+
+int HttpServer::Start()
+{
+  socklen_t addr_len;
+  struct sockaddr_storage their_addr;
+  char buff[BUFF_SIZE];
+
+  std::cout << "waiting to recvfrom" << std::endl;
+
+  for (;;) {
+    addr_len = sizeof their_addr;
+    int numbytes = recvfrom(sock_fd, buff, BUFF_SIZE -1, 0,
+          (struct sockaddr *)&their_addr, &addr_len);
+    buff[numbytes] = '\0';
+
+    Response response = Request(buff);
+
+    std::cout << response.header << std::endl;
+
+    if (numbytes == -1) {
+      perror("recvfrom: ");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  return 0;
 }

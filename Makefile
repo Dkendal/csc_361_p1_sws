@@ -5,11 +5,15 @@ test_name = $(TARGET)_test
 test_src = tests/$(test_name).cc
 VPATH = src:tests
 src = response.cc http_server.cc
-srcdir = src/
-srcproj = $(addprefix $(srcdir), $(src))
+srcdir = src
+program = sws
+main = $(srcdir)/$(program).cc
+srcproj = $(addprefix $(srcdir)/, $(src))
 
-all:
-	cd src && $(MAKE) && mv sws ../build/ -u
+all: $(program)
+
+$(program): $(srcproj) $(main)
+	$(CXX) $(CXXFLAGS) -o $(program) $(main) $(srcproj)
 
 .PHONY: test
 

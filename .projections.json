@@ -14,7 +14,7 @@
   "tests/*_test.cc": {
     "alternate": "src/{}.cc",
     "type": "test",
-    "dispatch": "make test TARGET={} && ./test --gtest_break_on_failure" ,
+    "dispatch": "make test TARGET={} && ./test" ,
     "template": "#include <gtest/gtest.h>\n\nTEST ()\n{\n}"
   },
 }
