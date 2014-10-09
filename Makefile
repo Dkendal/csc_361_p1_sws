@@ -2,21 +2,19 @@ LDLIBS := -lgtest -lgtest_main -lpthread
 CXXFLAGS := -Wall -pedantic
 
 test_name = $(TARGET)_test
-test_obj = $(test_name).o
 test_src = tests/$(test_name).cc
-src = src/$(TARGET).cc
-src_h = src/$(TARGET).h
+VPATH = src:tests
+src = response.cc http_server.cc
+srcdir = src/
+srcproj = $(addprefix $(srcdir), $(src))
 
 all:
 	cd src && $(MAKE) && mv sws ../build/ -u
 
-test: $(TARGET); ./test
+.PHONY: test
 
-$(TARGET): $(test_obj)
-	$(CXX) $(CXXFLAGS) -o test $(test_obj) $(LDLIBS)
-
-$(test_obj): $(test_src) $(src) $(src_h)
-	$(CXX) $(CXXFLAGS) $(LDLIBS) -c $(test_src)
+test:
+	$(CXX) $(CXXFLAGS) -o test $(test_src) $(srcproj) $(LDLIBS)
 
 clean:
 	rm -f *.o test

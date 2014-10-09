@@ -1,16 +1,8 @@
-#include <string>
-
 #ifndef HTTP_SEVER_H
 #define HTTP_SERVER_H
-using namespace std;
 
-struct Response {
-  string verb,
-         resource,
-         protocol,
-         header,
-         body;
-};
+using namespace std;
+#include "response.h"
 
 class HttpServer
 {
@@ -22,6 +14,8 @@ public:
 
   bool IsVerbValid(string);
   bool IsResourceValid(string);
+  bool IsResourceReadable(string);
+  bool IsProtocolValid(string);
 
 private:
   string root_dir;

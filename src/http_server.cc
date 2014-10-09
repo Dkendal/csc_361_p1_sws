@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "response.h"
 #include "http_server.h"
 
 #define PROTOCOL_VERSION "HTTP/1.0"
@@ -14,7 +15,6 @@
 
 using namespace std;
 
-
 HttpServer::HttpServer(const string root_dir) : root_dir(root_dir) {}
 HttpServer::~HttpServer() {}
 
@@ -23,16 +23,18 @@ string HttpServer::Get(string resource)
   return "";
 }
 
+bool HttpServer::IsProtocolValid(string protocol)
+{
+  return strcasecmp(protocol.c_str(), "HTTP/1.0") == 0;
+}
+
 bool HttpServer::IsVerbValid(string verb)
 {
   return strcasecmp(verb.c_str(), "get") == 0;
 }
 
-bool HttpServer::IsResourceValid(string resource)
+bool HttpServer::IsResourceReadable(string resource)
 {
-  if (resource.compare("/") == 0) {
-    resource = "/index.html";
-  }
 
   string uri = this->root_dir + resource;
 
@@ -41,43 +43,24 @@ bool HttpServer::IsResourceValid(string resource)
     return false;
   }
 
-  struct stat file_stats;
-  if (stat(uri.c_str(), &file_stats) != 0 || // file doesn't exist
-      file_stats.st_mode & S_IFDIR) {        // it's a directory
-    return false;
-  }
-
   ifstream file(uri.c_str());
   return file.good();
 }
 
+bool HttpServer::IsResourceValid(string resource)
+{
+  return true;
+}
+
 Response HttpServer::Request(string request_str)
 {
-  Response my_response;
-  {
-    int str_size = request_str.size();
-    char *req_temp = new char[str_size + 1];
+  Response my_response(request_str);
 
-    request_str.copy(req_temp, str_size);
-    req_temp[str_size + 1] = 0;
-
-    const char *tok = strtok(req_temp, " ");
-    my_response.verb = tok;
-
-    tok = strtok(NULL, " ");
-    my_response.resource = tok;
-
-    tok = strtok(NULL, " ");
-    my_response.protocol = tok;
-    delete req_temp;
-  }
-
-
-  if (strcasecmp(my_response.protocol.c_str(), "HTTP/1.0") != 0) {
+  if (!IsProtocolValid(my_response.protocol)) {
     my_response.header = STATUS_400;
   }
-  if (IsVerbValid(my_response.verb)) {
-    if(IsResourceValid(my_response.resource)) {
+  else if (IsVerbValid(my_response.verb)) {
+    if (IsResourceReadable(my_response.resource)) {
       my_response.header = STATUS_200;
     }
     else {
