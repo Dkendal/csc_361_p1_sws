@@ -29,7 +29,12 @@ HttpServer::HttpServer(string port, string root_dir) :
 }
 
 HttpServer::~HttpServer() {
-  if (sock_fd != 1) { close(sock_fd); }
+  if (IsSocketOpen()) { close(sock_fd); }
+}
+
+bool HttpServer::IsSocketOpen()
+{
+  return sock_fd != 1;
 }
 
 string HttpServer::Get(string resource)
@@ -107,7 +112,7 @@ int HttpServer::Init()
 
   if (sock_fd == -1)
   {
-    perror("getaddrinfo: ");
+    perror("socket: ");
     exit(EXIT_FAILURE);
   }
 
@@ -128,21 +133,33 @@ int HttpServer::Start()
   socklen_t addr_len;
   struct sockaddr_storage their_addr;
   char buff[BUFF_SIZE];
+  addr_len = sizeof their_addr;
 
   std::cout << "waiting to recvfrom" << std::endl;
 
   for (;;) {
-    addr_len = sizeof their_addr;
     int numbytes = recvfrom(sock_fd, buff, BUFF_SIZE -1, 0,
           (struct sockaddr *)&their_addr, &addr_len);
     buff[numbytes] = '\0';
 
     Response response = Request(buff);
 
-    std::cout << response.header << std::endl;
+    string msg_s = response.header + "\r\n" + response.body + "\r\n";
 
     if (numbytes == -1) {
       perror("recvfrom: ");
+      exit(EXIT_FAILURE);
+    }
+
+    ssize_t reti = sendto(sock_fd,
+        msg_s.c_str(),
+        msg_s.size(),
+        0,
+        (const struct sockaddr *) &their_addr,
+        addr_len);
+
+    if (reti == -1) {
+      perror("sendto: ");
       exit(EXIT_FAILURE);
     }
   }

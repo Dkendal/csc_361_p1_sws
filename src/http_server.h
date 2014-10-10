@@ -17,6 +17,7 @@ public:
   bool IsResourceValid(string);
   bool IsResourceReadable(string);
   bool IsProtocolValid(string);
+  bool IsSocketOpen();
 
   int Start();
   int Init();

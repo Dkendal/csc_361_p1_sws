@@ -4,13 +4,20 @@
 class HttpServerTest : public ::testing::Test
 {
   protected:
-    virtual void SetUp() { HttpServer server("9999", "./www"); }
-    //virtual void TearDown() { delete server; }
+    virtual void SetUp() { server = new HttpServer("3000", "./www"); }
+    virtual void TearDown() { delete server; }
     HttpServer *server;
 };
+class InitTest : public HttpServerTest { };
 class RequestTest : public HttpServerTest { };
 class IsResourceReadableTest : public HttpServerTest { };
 class IsResourceValidTest : public HttpServerTest { };
+
+TEST_F(InitTest, SetsSockfd)
+{
+  server->Init();
+  EXPECT_TRUE(server->IsSocketOpen());
+}
 
 TEST_F(IsResourceValidTest, ValidPath)
 {
