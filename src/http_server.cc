@@ -19,6 +19,7 @@
 #define STATUS_200 PROTOCOL_VERSION " 200 OK"
 #define STATUS_400 PROTOCOL_VERSION " 400 Bad Request"
 #define STATUS_404 PROTOCOL_VERSION " 404 Not Found"
+#define BUFF_SIZE 256
 
 using namespace std;
 
@@ -68,8 +69,7 @@ bool HttpServer::IsResourceReadable(string resource)
 
 bool HttpServer::IsResourceValid(string resource)
 {
-  const char *res = resource.c_str();
-  return res[0] == '/';
+  return resource[0] == '/';
 }
 
 Response HttpServer::Request(string request_str)
@@ -125,8 +125,6 @@ int HttpServer::Init()
 
   return 0;
 }
-
-#define BUFF_SIZE 256
 
 int HttpServer::Start()
 {
