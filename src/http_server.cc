@@ -40,7 +40,21 @@ bool HttpServer::IsSocketOpen()
 
 string HttpServer::Get(string resource)
 {
-  return "";
+  string out;
+  const char *uri = (root_dir + resource).c_str();
+  ifstream file(uri);
+
+  if (file.is_open()) {
+    string line;
+    while (getline(file, line)) {
+      out += line + "\n";
+    }
+    file.close();
+  }
+  else {
+    std::cout << "couldn't open file" << std::endl;
+  }
+  return out;
 }
 
 bool HttpServer::IsProtocolValid(string protocol)
@@ -55,7 +69,7 @@ bool HttpServer::IsVerbValid(string verb)
 
 bool HttpServer::IsResourceReadable(string resource)
 {
-  string uri = this->root_dir + resource;
+  string uri = root_dir + resource;
   const char *uri_c = uri.c_str();
 
   // this is very naive, will report false positive if filename is prefixed with ..
@@ -84,6 +98,13 @@ Response HttpServer::Request(string request_str)
   else {
     if (IsResourceReadable(response.resource)) {
       response.header = STATUS_200;
+      if (response.verb == "GET") {
+        response.body = Get(response.resource);
+      }
+      else {
+        // shouldn't ever get here
+        response.header = STATUS_400;
+      }
     }
     else {
       response.header = STATUS_404;
@@ -128,21 +149,27 @@ int HttpServer::Init()
 
 int HttpServer::Start()
 {
+  std::cout << "press 'q' to quit ..." << std::endl;
   socklen_t addr_len;
   struct sockaddr_storage their_addr;
-  char buff[BUFF_SIZE];
+  char buffer[BUFF_SIZE];
   addr_len = sizeof their_addr;
 
   std::cout << "waiting to recvfrom" << std::endl;
 
   for (;;) {
-    int numbytes = recvfrom(sock_fd, buff, BUFF_SIZE -1, 0,
-          (struct sockaddr *)&their_addr, &addr_len);
-    buff[numbytes] = '\0';
+    ssize_t numbytes = recvfrom(sock_fd,
+        buffer,
+        BUFF_SIZE -1,
+        0,
+        (struct sockaddr *)&their_addr,
+        &addr_len);
 
-    Response response = Request(buff);
+    buffer[numbytes] = '\0';
 
-    string msg_s = response.header + "\r\n" + response.body + "\r\n";
+    Response response = Request(buffer);
+
+    string msg_s = response.header + "\r\n\r\n" + response.body + "\r\n";
 
     if (numbytes == -1) {
       perror("recvfrom: ");

@@ -2,6 +2,7 @@
 #include <cstring>
 #include "response.h"
 #include <iostream>
+#include <algorithm>
 
 using namespace std;
 
@@ -42,5 +43,8 @@ Response::Response(string request)
     tok = strtok(NULL, delimiters);
   }
 
-  delete req_temp;
+  delete[] req_temp;
+
+  transform(verb.begin(), verb.end(), verb.begin(), ::toupper);
+  transform(protocol.begin(), protocol.end(), protocol.begin(), ::toupper);
 }

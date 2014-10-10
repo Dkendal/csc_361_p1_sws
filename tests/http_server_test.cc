@@ -12,6 +12,18 @@ class InitTest : public HttpServerTest { };
 class RequestTest : public HttpServerTest { };
 class IsResourceReadableTest : public HttpServerTest { };
 class IsResourceValidTest : public HttpServerTest { };
+class GetTest : public HttpServerTest { };
+
+TEST_F(GetTest, ValidFile)
+{
+  string body = server->Get("/index.html");
+  string expected =
+    "Hello, this is the index.html file of your root directory.\n"
+    "You should retrieve this file file as default file when the http request "
+    "URI has no specific file name.\n";
+
+  EXPECT_EQ(expected, body);
+}
 
 TEST_F(InitTest, SetsSockfd)
 {
