@@ -1,9 +1,17 @@
 #ifndef HTTP_SEVER_H
 #define HTTP_SERVER_H
-
-#include "response.h"
+class Response;
+class sockaddr_storage;
+class sockaddr_in;
 
 using namespace std;
+
+struct network_info
+{
+  string ip;
+  unsigned short port;
+};
+
 
 class HttpServer
 {
@@ -18,6 +26,7 @@ public:
   bool IsResourceReadable(string);
   bool IsProtocolValid(string);
   bool IsSocketOpen();
+  bool IsReadyToRead();
 
   int Start();
   int Init();
@@ -26,4 +35,9 @@ private:
   string root_dir;
   int sock_fd;
 };
+
+string Timestamp();
+string StrUntil(const char *, const char *);
+struct network_info GetInfo(sockaddr_in *);
+void LogRequest(string, sockaddr_storage, Response);
 #endif

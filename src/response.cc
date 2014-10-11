@@ -15,12 +15,13 @@ Response::Response(string request)
   const char *delimiters = " \n";
 
   request.copy(req_temp, str_size);
-  req_temp[str_size] = 0;
+  req_temp[str_size] = '\0';
 
   const char *tok = strtok(req_temp, delimiters);
 
   for (int i=0; i < 3; i++) {
     if (tok == NULL) {
+      status = 400;
       header = "HTTP/1.0 400 Bad Request";
       break;
     }

@@ -1,6 +1,5 @@
 #ifndef RESPONSE_H
 #define RESPONSE_H
-
 using namespace std;
 
 struct Response
@@ -10,6 +9,8 @@ struct Response
          protocol,
          header,
          body;
+  short status;
+
   Response();
   Response(string);
 };
