@@ -1,0 +1,6 @@
+get /expected http/1.0 # HTTP/1.0 200 OK
+GET /../Makefile HTTP/1.0 # HTTP/1.0 404 Not found
+get / # HTTP/1.0 # HTTP/1.0 400 Bad Request
+GeT / HttP/1.0 # HTTP/1.0 200 OK
+GET /foo/bar/bar.txt HTTP/1.0 # HTTP/1.0 200 OK
+GET /asdf HTTP/1.0 # HTTP/1.0 404 OK
